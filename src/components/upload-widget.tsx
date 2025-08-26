@@ -1,19 +1,30 @@
+import * as Collapsible from '@radix-ui/react-collapsible'
 import { UploadWidgetDropzone } from './upload-widget-drop-zone'
 import { UploadWidgetHeader } from './upload-widget-header'
 import { UploadWidgetUploadList } from './upload-widget-upload-list'
+import { useState } from 'react'
+import { UploadWidgetMinimizedButton } from './upload-widget-minimized-button'
 
 export function UploadWidget () {
+  const [isWidgetOpen, setIsWidgetOpen] = useState(false)
+
   return (
-    <div className='w-full overflow-hidden bg-zinc-900 max-w-[360px] rounded-xl shadow-shape'>
-      <UploadWidgetHeader />
+    <Collapsible.Root onOpenChange={setIsWidgetOpen}>
+      <div className='overflow-hidden bg-zinc-900 w-[360px] rounded-xl shadow-shape'>
+        {!isWidgetOpen && <UploadWidgetMinimizedButton />}
 
-      <div className='flex flex-col gap-4 py-3'>
-        <UploadWidgetDropzone />
+        <Collapsible.Content>
+          <UploadWidgetHeader />
 
-        <div className='h-px bg-zinc-800 border-t border-black/50 box-content' />
+          <div className='flex flex-col gap-4 py-3'>
+            <UploadWidgetDropzone />
 
-        <UploadWidgetUploadList />
+            <div className='h-px bg-zinc-800 border-t border-black/50 box-content' />
+
+            <UploadWidgetUploadList />
+          </div>
+        </Collapsible.Content>
       </div>
-    </div>
+    </Collapsible.Root>
   )
 }
