@@ -4,7 +4,9 @@ import { UploadWidgetTitle } from './upload-widget-title.tsx'
 
 export function UploadWidgetMinimizedButton () {
   return (
-    <Collapsible.Trigger className='group w-full bg-white/2 py-3 px-5 flex items-center justify-between'>
+    <Collapsible.Trigger
+      className='group w-full bg-white/2 py-3 px-5 flex items-center justify-between gap-5'
+    >
       <UploadWidgetTitle />
       <Maximize2
         strokeWidth={1.5}
