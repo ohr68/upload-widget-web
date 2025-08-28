@@ -27,4 +27,8 @@
     .opacity-2 {
       opacity: 0.02;
     }
+
+    .text-xxs {
+      font-size: 0.625rem
+    }
 }
