@@ -20,6 +20,16 @@ export function UploadWidgetUploadItem ({ uploadId, upload } : UploadWidgetItemP
     100
   )
 
+  const compressionResultPercentage = !upload.compressSizeInBytes
+    ? 0
+    : (1 - Math.round((upload.originalSizeInBytes - upload.compressSizeInBytes) *
+  100 / upload.originalSizeInBytes))
+
+  const compressionResultBaseClassName = 'ml-1'
+  const compressionResultClassName = compressionResultPercentage! < 0
+    ? compressionResultBaseClassName.concat(' ', 'text-green-400')
+    : compressionResultBaseClassName.concat(' ', 'text-red-400')
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -31,16 +41,24 @@ export function UploadWidgetUploadItem ({ uploadId, upload } : UploadWidgetItemP
       <div className='flex flex-col gap-1'>
         <span className='text-xs font-medium flex items-center gap-1'>
           <ImageUp className='size-3 text-zinc-300' strokeWidth={1.5} />
-          <span>{upload.name}</span>
+          <span
+            className='truncate max-w-[180px]'
+            title={upload.name}
+          >
+            {upload.name}
+          </span>
         </span>
 
         <span className='text-xxs text-zinc-400 flex gap-1.5 items-center'>
           <span>{formatBytes(upload.originalSizeInBytes)}</span>
           <div className='size-1 rounded-full bg-zinc-700' />
-          <span>300KB
-            <span className='text-green-400 ml-1'>
-              -94%
-            </span>
+          <span>
+            {formatBytes(upload.compressSizeInBytes ?? 0)}
+            {upload.compressSizeInBytes && (
+              <span className={compressionResultClassName}>
+                {compressionResultPercentage}%
+              </span>
+            )}
           </span>
           <div className='size-1 rounded-full bg-zinc-700' />
           {upload.status === 'success' && <span>100%</span>}
@@ -67,10 +85,13 @@ export function UploadWidgetUploadItem ({ uploadId, upload } : UploadWidgetItemP
       <div className='absolute top-2.5 right-2.5 flex items-center gap-1'>
         <Button
           size='icon-sm'
-          disabled={upload.status !== 'success'}
+          aria-disabled={upload.status !== 'success'}
+          asChild
         >
-          <Download className='size-4' strokeWidth={1.5} />
-          <span className='sr-only'>Download compressed image</span>
+          <a href={upload.remoteUrl} target='blank'>
+            <Download className='size-4' strokeWidth={1.5} />
+            <span className='sr-only'>Download compressed image</span>
+          </a>
         </Button>
         <Button
           size='icon-sm'
