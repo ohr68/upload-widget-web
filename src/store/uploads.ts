@@ -4,6 +4,7 @@ import { immer } from 'zustand/middleware/immer'
 import { uploadFileToStorage } from '../http/upload-file-to-storage'
 import { CanceledError } from 'axios'
 import { useShallow } from 'zustand/shallow'
+import { compressImage } from '../utils/compress-image'
 
 export type Upload = {
   name: string
@@ -11,7 +12,9 @@ export type Upload = {
   abortController: AbortController
   status: 'progress' | 'success' | 'error' | 'canceled'
   originalSizeInBytes: number
+  compressSizeInBytes?: number
   uploadSizeInBytes: number
+  remoteUrl?: string
 }
 
 type UploadsState = {
@@ -46,18 +49,27 @@ export const useUploads = create<UploadsState, [['zustand/immer', never]]>(
         return
       }
 
-      await uploadFileToStorage(
-        {
-          file: upload.file,
-          onProgress (sizeInBytes) {
-            updateUpload(uploadId, { uploadSizeInBytes: sizeInBytes })
-          }
-        },
-        { signal: upload.abortController.signal }
-      )
-
       try {
-        updateUpload(uploadId, { status: 'success' })
+        const compressedFile = await compressImage({
+          file: upload.file,
+          maxWidth: 1000,
+          maxHeight: 1000,
+          quality: 0.8
+        })
+
+        updateUpload(uploadId, { compressSizeInBytes: compressedFile.size })
+
+        const { url } = await uploadFileToStorage(
+          {
+            file: compressedFile,
+            onProgress (sizeInBytes) {
+              updateUpload(uploadId, { uploadSizeInBytes: sizeInBytes })
+            }
+          },
+          { signal: upload.abortController.signal }
+        )
+
+        updateUpload(uploadId, { status: 'success', remoteUrl: url })
       } catch (err) {
         if (err instanceof CanceledError) {
           updateUpload(uploadId, { status: 'canceled' })
@@ -121,8 +133,11 @@ export const usePendingUploads = () => {
 
     const { total, uploaded } = Array.from(store.uploads.values()).reduce(
       (acc, upload) => {
-        acc.total += upload.originalSizeInBytes
-        acc.uploaded += upload.uploadSizeInBytes
+        if (upload.compressSizeInBytes) {
+          acc.uploaded += upload.uploadSizeInBytes
+        }
+
+        acc.total += upload.compressSizeInBytes || upload.originalSizeInBytes
 
         return acc
       },
