@@ -4,6 +4,7 @@ import { Download, ImageUp, Link2, RefreshCcw, X } from 'lucide-react'
 import { Button } from './ui/button'
 import { useUploads, type Upload } from '../store/uploads'
 import { formatBytes } from '../utils/format-bytes'
+import { downloadUrl } from '../utils/download-url'
 
 interface UploadWidgetItemProps {
   uploadId: string
@@ -12,6 +13,7 @@ interface UploadWidgetItemProps {
 
 export function UploadWidgetUploadItem ({ uploadId, upload } : UploadWidgetItemProps) {
   const cancelUpload = useUploads(store => store.cancelUpload)
+  const retryUpload = useUploads(store => store.retryUpload)
 
   const progress = Math.min(
     upload.compressSizeInBytes
@@ -82,16 +84,18 @@ export function UploadWidgetUploadItem ({ uploadId, upload } : UploadWidgetItemP
         />
       </Progress.Root>
 
-      <div className='absolute top-2.5 right-2.5 flex items-center gap-1'>
+      <div className='absolute top-2 right-2 flex items-center gap-1'>
         <Button
           size='icon-sm'
-          aria-disabled={upload.status !== 'success'}
-          asChild
+          aria-disabled={!upload.remoteUrl}
+          onClick={() => {
+            if (upload.remoteUrl) {
+              downloadUrl(upload.remoteUrl)
+            }
+          }}
         >
-          <a href={upload.remoteUrl} target='blank'>
-            <Download className='size-4' strokeWidth={1.5} />
-            <span className='sr-only'>Download compressed image</span>
-          </a>
+          <Download className='size-4' strokeWidth={1.5} />
+          <span className='sr-only'>Download compressed image</span>
         </Button>
         <Button
           size='icon-sm'
@@ -104,6 +108,7 @@ export function UploadWidgetUploadItem ({ uploadId, upload } : UploadWidgetItemP
         <Button
           size='icon-sm'
           disabled={!['canceled', 'error'].includes(upload.status)}
+          onClick={() => retryUpload(uploadId)}
         >
           <RefreshCcw className='size-4' strokeWidth={1.5} />
           <span className='sr-only'>Retry upload</span>
